@@ -1,0 +1,9 @@
+name: PokerCraft
+main: ch.dams333.pokerCraft.Poker
+author: Dams333
+version: 1.0.0
+api-version: 1.13
+commands:
+  start:
+    description: Demarrer une partie
+    permission: pokercraft.commands.admin.start
