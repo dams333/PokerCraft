@@ -106,7 +106,12 @@ public class GameManager {
 
         new GameAfficheTask(main).runTaskTimer(main, 5, 5);
 
-        startEnchereRound();
+        Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
+            @Override
+            public void run() {
+                startEnchereRound();
+            }
+        }, 60L);
     }
 
     private Integer getSmallBlind() {
@@ -138,6 +143,9 @@ public class GameManager {
 
     private void haveToChooseAction(Player p) {
 
+        p.sendMessage(" ");
+        p.sendMessage(" ");
+
         p.sendMessage(ChatColor.DARK_GREEN + "======= Actions =======");
         p.sendMessage("       " + ChatColor.LIGHT_PURPLE + "2 " + ChatColor.GRAY + "Se coucher");
 
@@ -148,6 +156,13 @@ public class GameManager {
             p.sendMessage("       " + ChatColor.LIGHT_PURPLE  + "4 " + ChatColor.GRAY + "Suivre");
         }
         p.sendMessage("       " + ChatColor.LIGHT_PURPLE + "5 " + ChatColor.GRAY + "Relancer");
+
+        p.sendMessage(" ");
+
+        p.sendMessage(ChatColor.LIGHT_PURPLE + "Appuyez sur le chiffre correspondant");
+
+        p.sendMessage(" ");
+        p.sendMessage(" ");
 
     }
 
@@ -266,7 +281,7 @@ public class GameManager {
             Bukkit.broadcastMessage(main.name + places.get(needToEnchere).getName() + " doit choisir une action");
             haveToChooseAction(places.get(needToEnchere));
         }else{
-            Bukkit.broadcastMessage(main.name + "Fin du tour d'encher");
+            Bukkit.broadcastMessage(main.name + "Fin du tour d'enchpre");
             needToEnchere = 0;
             Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
                 @Override
@@ -412,10 +427,10 @@ public class GameManager {
                     @Override
                     public void run() {
                         main.mapManager.resetTable();
-                        Bukkit.broadcastMessage(main.name + "Un nouveau tour d'enchère va commencer");
+                        Bukkit.broadcastMessage(main.name + "Un nouveau tour va commencer...");
                        newRound();
                     }
-                }, 150L);
+                }, 200L);
 
             }
         }, 80L);
@@ -453,9 +468,14 @@ public class GameManager {
                 removeMoney(places.get(bigBlind), 20);
                 removeMoney(places.get(getSmallBlind()), 10);
 
-                startEnchereRound();
+                Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
+                    @Override
+                    public void run() {
+                        startEnchereRound();
+                    }
+                }, 20L);
             }
-        }, 30L);
+        }, 50L);
 
     }
 }
