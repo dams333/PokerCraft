@@ -52,6 +52,7 @@ public class Poker extends JavaPlugin{
 
     @EventHandler
     public void onDisable(){
+        gameManager.central.remove();
         for(Player p : gameManager.armorStands.keySet()){
             gameManager.armorStands.get(p).remove();
         }

@@ -34,9 +34,13 @@ public class GameManager {
         bided = new HashMap<>();
         armorStands = new HashMap<>();
         dead = new ArrayList<>();
+        message = "";
+        central = null;
     }
 
     public Map<Integer, Player> places;
+
+    public String message;
 
     public List<Player> debout;
 
@@ -50,6 +54,8 @@ public class GameManager {
     public Map<Player, ArmorStand> armorStands;
 
     public List<String[]> river;
+
+    public ArmorStand central;
 
     public List<Player> dead;
 
@@ -86,7 +92,6 @@ public class GameManager {
             this.bided.put(p, 0);
 
             Location spawnArmorStand = p.getLocation();
-            spawnArmorStand.add(0, 0, 0);
             ArmorStand armorStand = (ArmorStand) spawnArmorStand.getWorld().spawnEntity(spawnArmorStand, EntityType.ARMOR_STAND);
             armorStand.setCustomNameVisible(true);
             armorStand.setVisible(false);
@@ -94,6 +99,14 @@ public class GameManager {
             armorStand.setGravity(false);
             this.armorStands.put(p, armorStand);
         }
+
+        Location spawnArmorStand = new Location(Bukkit.getWorld("world"), -208, 80, 119);
+        ArmorStand armorStand = (ArmorStand) spawnArmorStand.getWorld().spawnEntity(spawnArmorStand, EntityType.ARMOR_STAND);
+        armorStand.setCustomNameVisible(true);
+        armorStand.setVisible(false);
+        armorStand.setInvulnerable(true);
+        armorStand.setGravity(false);
+       central = armorStand;
 
         bigBlind = main.API.random(1, debout.size());
 
@@ -130,6 +143,8 @@ public class GameManager {
     Map<Player, Boolean> exprimed;
 
     private void startEnchereRound(){
+
+        message = "Un nouveau round commence";
 
         exprimed = new HashMap<>();
         for(Player p : debout){
@@ -236,10 +251,12 @@ public class GameManager {
     private void follow(Player p) {
         if(this.tapis.get(p) > (this.currentBid - this.bided.get(p))){
             Bukkit.broadcastMessage(main.name + p.getName() + " suit de " + (this.currentBid - this.bided.get(p)));
-            removeMoney(p, (this.currentBid - this.bided.get(p)));
+            message =p.getName() + " suit de " + (this.currentBid - this.bided.get(p));
+                    removeMoney(p, (this.currentBid - this.bided.get(p)));
             addBid(p, (this.currentBid - this.bided.get(p)));
         }else{
             Bukkit.broadcastMessage(main.name + p.getName() + " fait tapis de " + this.tapis.get(p));
+            message = p.getName() + " fait tapis de " + this.tapis.get(p);
             tapis.put(p, 0);
             addBid(p, this.tapis.get(p));
         }
@@ -248,12 +265,14 @@ public class GameManager {
 
     private void check(Player p) {
         Bukkit.broadcastMessage(main.name + p.getName() + " check");
+        message = p.getName() + " check";
         this.nextEnchere();
     }
 
     private void couche(Player p) {
         this.debout.remove(p);
         Bukkit.broadcastMessage(main.name + p.getName() + " se couche");
+        message = p.getName() + " se couche";
         main.mapManager.removePlayerCards(needToEnchere);
         p.getInventory().clear();
         p.updateInventory();
@@ -312,6 +331,7 @@ public class GameManager {
                     Player finalBestP = debout.get(0);
 
                     Bukkit.broadcastMessage(main.name + finalBestP.getName() + " est le dernier debout. Il remporte " + total);
+                    message = finalBestP.getName() + " remporte le round";
 
                     addMoney(finalBestP, total);
                     currentBid = 0;
@@ -351,11 +371,13 @@ public class GameManager {
         if((add + this.bided.get(relance)) > currentBid){
             if(this.tapis.get(relance) > add){
                 Bukkit.broadcastMessage(main.name + relance.getName() + " relance de " + add);
+                message = relance.getName() + " relance de " + add;
                 removeMoney(relance, add);
                 addBid(relance, add);
                 this.currentBid = this.bided.get(relance);
             }else{
                 Bukkit.broadcastMessage(main.name + relance.getName() + " fait tapis de " + this.tapis.get(relance));
+                message = relance.getName() + " fait tapis de " + this.tapis.get(relance);
                 addBid(relance, this.tapis.get(relance));
                 tapis.put(relance, 0);
                 if(this.bided.get(relance) > currentBid){
@@ -510,12 +532,13 @@ public class GameManager {
         }
 
         Player finalBestP = bestP;
+        cards = new HashMap<>();
+        river = new ArrayList<>();
+        debout = new ArrayList<>();
         Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
             @Override
             public void run() {
 
-                cards = new HashMap<>();
-                river = new ArrayList<>();
 
                 int total = 0;
                 for(Player p : bided.keySet()){
@@ -524,6 +547,7 @@ public class GameManager {
                 }
 
                 Bukkit.broadcastMessage(main.name + finalBestP.getName() + " a la meilleur combinaison. Il remporte " + total);
+                message = finalBestP.getName() + " remporte le round";
 
                 addMoney(finalBestP, total);
                 currentBid = 0;
@@ -534,11 +558,6 @@ public class GameManager {
                             dead.add(p);
                         }
                     }
-                }
-
-
-                for(Player p : debout){
-                    debout.remove(p);
                 }
 
 
@@ -590,6 +609,7 @@ public class GameManager {
                 if(bigBlind > debout.size()){
                     bigBlind = 1;
                 }
+
                 Bukkit.broadcastMessage(main.name + "La nouvelle big blind est " + places.get(bigBlind).getName());
                 currentBid = 20;
 
@@ -638,6 +658,8 @@ public class GameManager {
             }
             armorStands = new HashMap<>();
             dead = new ArrayList<>();
+            central.remove();
+            central = null;
             return true;
         }
         if(debout.size() == 1){
@@ -667,6 +689,8 @@ public class GameManager {
             }
             armorStands = new HashMap<>();
             dead = new ArrayList<>();
+            central.remove();
+            central = null;
             return true;
         }
         return false;

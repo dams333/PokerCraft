@@ -42,6 +42,9 @@ public class GameAfficheTask extends BukkitRunnable {
                 }
             }
         }
+        if(main.gameManager.central != null){
+            main.gameManager.central.setCustomName(ChatColor.GRAY + main.gameManager.message);
+        }
     }
 
 
