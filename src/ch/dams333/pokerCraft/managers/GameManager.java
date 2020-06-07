@@ -66,6 +66,16 @@ public class GameManager {
     public int needToEnchere = 0;
 
     public void startGame() {
+        places = new HashMap<>();
+        tapis = new HashMap<>();
+        cards = new HashMap<>();
+        river = new ArrayList<>();
+        bided = new HashMap<>();
+        armorStands = new HashMap<>();
+        dead = new ArrayList<>();
+        message = "";
+
+
         main.setGameState(GameState.STARTING);
         main.mapManager.resetTable();
         main.cardManager.resetDeck();
@@ -144,7 +154,7 @@ public class GameManager {
 
     private void startEnchereRound(){
 
-        message = "Un nouveau round commence";
+        message = "Un nouveau tour commence";
 
         exprimed = new HashMap<>();
         for(Player p : debout){
@@ -280,6 +290,7 @@ public class GameManager {
     }
 
     private boolean testSoloWin() {
+
         if(debout.size() < 1){
             Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
                 @Override
@@ -300,18 +311,22 @@ public class GameManager {
                         }
                     }
 
+                    debout.clear();
                     for(Player p : Bukkit.getOnlinePlayers()){
-                        if(!dead.contains(p)) {
+                        if(!dead.contains(p)){
                             debout.add(p);
                         }
                     }
 
+
                     Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
                         @Override
                         public void run() {
-                            main.mapManager.resetTable();
-                            Bukkit.broadcastMessage(main.name + "Un nouveau tour va commencer...");
-                            newRound();
+                            if(!testEndGame()) {
+                                main.mapManager.resetTable();
+                                Bukkit.broadcastMessage(main.name + "Un nouveau tour va commencer...");
+                                newRound();
+                            }
                         }
                     }, 50L);
                 }
@@ -344,18 +359,23 @@ public class GameManager {
                         }
                     }
 
+                    debout.clear();
+
                     for(Player p : Bukkit.getOnlinePlayers()){
-                        if(!dead.contains(p)) {
+                        if(!dead.contains(p)){
                             debout.add(p);
                         }
                     }
 
+
                     Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
                         @Override
                         public void run() {
-                            main.mapManager.resetTable();
-                            Bukkit.broadcastMessage(main.name + "Un nouveau tour va commencer...");
-                            newRound();
+                            if(!testEndGame()) {
+                                main.mapManager.resetTable();
+                                Bukkit.broadcastMessage(main.name + "Un nouveau tour va commencer...");
+                                newRound();
+                            }
                         }
                     }, 50L);
                 }
@@ -532,9 +552,6 @@ public class GameManager {
         }
 
         Player finalBestP = bestP;
-        cards = new HashMap<>();
-        river = new ArrayList<>();
-        debout = new ArrayList<>();
         Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
             @Override
             public void run() {
@@ -560,9 +577,9 @@ public class GameManager {
                     }
                 }
 
-
+                debout.clear();
                 for(Player p : Bukkit.getOnlinePlayers()){
-                    if(!dead.contains(p)) {
+                    if(!dead.contains(p)){
                         debout.add(p);
                     }
                 }
@@ -584,8 +601,10 @@ public class GameManager {
 
     private void newRound(){
 
-
         main.setGameState(GameState.STARTING);
+
+        cards = new HashMap<>();
+        river = new ArrayList<>();
 
         main.cardManager.resetDeck();
 
