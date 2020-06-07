@@ -33,6 +33,7 @@ public class GameManager {
         river = new ArrayList<>();
         bided = new HashMap<>();
         armorStands = new HashMap<>();
+        dead = new ArrayList<>();
     }
 
     public Map<Integer, Player> places;
@@ -49,6 +50,8 @@ public class GameManager {
     public Map<Player, ArmorStand> armorStands;
 
     public List<String[]> river;
+
+    public List<Player> dead;
 
     private int bigBlind;
 
@@ -94,7 +97,8 @@ public class GameManager {
 
         bigBlind = main.API.random(1, debout.size());
 
-        Bukkit.broadcastMessage(main.name + "La big blind est " + places.get(bigBlind).getName());
+        Bukkit.broadcastMessage(main.name + "La big blind est " + places.get(bigBlind).getName() + ". Il mise 20");
+        Bukkit.broadcastMessage(main.name + "La small blind est " + places.get(getSmallBlind()).getName() + ". Il mise 10");
 
         currentBid = 20;
 
@@ -116,14 +120,22 @@ public class GameManager {
 
     private Integer getSmallBlind() {
         int smallBlind = bigBlind;
+        smallBlind--;
         if(smallBlind < 1){
             smallBlind = debout.size();
         }
         return smallBlind;
     }
 
+    Map<Player, Boolean> exprimed;
 
     private void startEnchereRound(){
+
+        exprimed = new HashMap<>();
+        for(Player p : debout){
+            exprimed.put(p, false);
+        }
+
         needToEnchere = bigBlind;
         needToEnchere++;
         if(needToEnchere > places.keySet().size()){
@@ -163,6 +175,8 @@ public class GameManager {
 
         p.sendMessage(" ");
         p.sendMessage(" ");
+
+        this.exprimed.put(p, true);
 
     }
 
@@ -243,12 +257,93 @@ public class GameManager {
         main.mapManager.removePlayerCards(needToEnchere);
         p.getInventory().clear();
         p.updateInventory();
-        if(!this.testSoloWin()){
-            this.nextEnchere();
-        }
+        testSoloWin();
     }
 
     private boolean testSoloWin() {
+        if(debout.size() < 1){
+            Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
+                @Override
+                public void run() {
+                    for(Player p : bided.keySet()){
+                        bided.put(p, 0);
+                    }
+
+                    Bukkit.broadcastMessage(main.name + "Il n'y a plus de joueur debout");
+
+                    currentBid = 0;
+
+                    for(Player p : tapis.keySet()){
+                        if(tapis.get(p) <= 0){
+                            if(!dead.contains(p)){
+                                dead.add(p);
+                            }
+                        }
+                    }
+
+                    for(Player p : Bukkit.getOnlinePlayers()){
+                        if(!dead.contains(p)) {
+                            debout.add(p);
+                        }
+                    }
+
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
+                        @Override
+                        public void run() {
+                            main.mapManager.resetTable();
+                            Bukkit.broadcastMessage(main.name + "Un nouveau tour va commencer...");
+                            newRound();
+                        }
+                    }, 50L);
+                }
+            }, 50L);
+            return true;
+        }
+        else if(debout.size() == 1){
+            Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
+                @Override
+                public void run() {
+                    int total = 0;
+                    for(Player p : bided.keySet()){
+                        total += bided.get(p);
+                        bided.put(p, 0);
+                    }
+
+                    Player finalBestP = debout.get(0);
+
+                    Bukkit.broadcastMessage(main.name + finalBestP.getName() + " est le dernier debout. Il remporte " + total);
+
+                    addMoney(finalBestP, total);
+                    currentBid = 0;
+
+                    for(Player p : tapis.keySet()){
+                        if(tapis.get(p) <= 0){
+                            if(!dead.contains(p)){
+                                dead.add(p);
+                            }
+                        }
+                    }
+
+                    for(Player p : Bukkit.getOnlinePlayers()){
+                        if(!dead.contains(p)) {
+                            debout.add(p);
+                        }
+                    }
+
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
+                        @Override
+                        public void run() {
+                            main.mapManager.resetTable();
+                            Bukkit.broadcastMessage(main.name + "Un nouveau tour va commencer...");
+                            newRound();
+                        }
+                    }, 50L);
+                }
+            }, 70L);
+            return true;
+        }else{
+            nextEnchere();
+        }
         return false;
     }
 
@@ -274,6 +369,15 @@ public class GameManager {
     }
 
     private void nextEnchere() {
+
+        boolean everypodyParled = true;
+
+        for(Player p : exprimed.keySet()){
+            if(!exprimed.get(p)){
+                everypodyParled = false;
+            }
+        }
+
         this.relance = null;
         int nextPlayer = getNextPlayer();
         if(this.bided.get(places.get(nextPlayer)) < this.currentBid){
@@ -281,14 +385,20 @@ public class GameManager {
             Bukkit.broadcastMessage(main.name + places.get(needToEnchere).getName() + " doit choisir une action");
             haveToChooseAction(places.get(needToEnchere));
         }else{
-            Bukkit.broadcastMessage(main.name + "Fin du tour d'enchpre");
-            needToEnchere = 0;
-            Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
-                @Override
-                public void run() {
-                    endTour();
-                }
-            }, 10L);
+            if(everypodyParled) {
+                Bukkit.broadcastMessage(main.name + "Fin du tour d'enchère");
+                needToEnchere = 0;
+                Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
+                    @Override
+                    public void run() {
+                        endTour();
+                    }
+                }, 10L);
+            }else{
+                needToEnchere = nextPlayer;
+                Bukkit.broadcastMessage(main.name + places.get(needToEnchere).getName() + " doit choisir une action");
+                haveToChooseAction(places.get(needToEnchere));
+            }
         }
     }
 
@@ -414,21 +524,33 @@ public class GameManager {
                     bided.put(p, 0);
                 }
 
-                for(Player p : Bukkit.getOnlinePlayers()){
-                    debout.add(p);
-                }
-
                 Bukkit.broadcastMessage(main.name + finalBestP.getName() + " a la meilleur combinaison. Il remporte " + total);
 
                 addMoney(finalBestP, total);
                 currentBid = 0;
 
+                for(Player p : tapis.keySet()){
+                    if(tapis.get(p) <= 0){
+                        if(!dead.contains(p)){
+                            dead.add(p);
+                        }
+                    }
+                }
+
+                for(Player p : Bukkit.getOnlinePlayers()){
+                    if(!dead.contains(p)) {
+                        debout.add(p);
+                    }
+                }
+
                 Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
                     @Override
                     public void run() {
-                        main.mapManager.resetTable();
-                        Bukkit.broadcastMessage(main.name + "Un nouveau tour va commencer...");
-                       newRound();
+                        if(!testEndGame()) {
+                            main.mapManager.resetTable();
+                            Bukkit.broadcastMessage(main.name + "Un nouveau tour va commencer...");
+                            newRound();
+                        }
                     }
                 }, 200L);
 
@@ -437,7 +559,11 @@ public class GameManager {
     }
 
     private void newRound(){
+
+
         main.setGameState(GameState.STARTING);
+
+        main.cardManager.resetDeck();
 
         for(Player p : debout) {
             p.getInventory().setHeldItemSlot(0);
@@ -477,5 +603,67 @@ public class GameManager {
             }
         }, 50L);
 
+    }
+
+    private boolean testEndGame() {
+        if(debout.size() <= 0){
+            Bukkit.broadcastMessage(main.name + "La partie est terminée, personne ne la remporte !");
+            for(Player p : Bukkit.getOnlinePlayers()){
+                p.getInventory().clear();
+                p.updateInventory();
+            }
+            main.cardManager.resetDeck();
+            main.mapManager.resetTable();
+            main.setGameState(GameState.PREGAME);
+            debout = new ArrayList<>();
+            spawns = new HashMap<>();
+            spawns.put(1, new Location(Bukkit.getWorld("world"), -204.39, 81, 115.46, 18, 22));
+            spawns.put(2, new Location(Bukkit.getWorld("world"), -207.6, 81, 115.46, -1, 23));
+            spawns.put(3, new Location(Bukkit.getWorld("world"), -210.4, 81, 115.46, -30, 25));
+            spawns.put(4, new Location(Bukkit.getWorld("world"), -204.39, 81, 123.7, 159, 26));
+            spawns.put(5, new Location(Bukkit.getWorld("world"), -207.6, 81, 123.7, -178, 30));
+            spawns.put(6, new Location(Bukkit.getWorld("world"), -210.4, 81, 123.7, -150, 30));
+            places = new HashMap<>();
+            tapis = new HashMap<>();
+            cards = new HashMap<>();
+            river = new ArrayList<>();
+            bided = new HashMap<>();
+            for(Player p : armorStands.keySet()){
+                armorStands.get(p).remove();
+            }
+            armorStands = new HashMap<>();
+            dead = new ArrayList<>();
+            return true;
+        }
+        if(debout.size() == 1){
+            Bukkit.broadcastMessage(main.name + debout.get(0).getName() + " remporte la partie !!!");
+            for(Player p : Bukkit.getOnlinePlayers()){
+                p.getInventory().clear();
+                p.updateInventory();
+            }
+            main.cardManager.resetDeck();
+            main.mapManager.resetTable();
+            main.setGameState(GameState.PREGAME);
+            debout = new ArrayList<>();
+            spawns = new HashMap<>();
+            spawns.put(1, new Location(Bukkit.getWorld("world"), -204.39, 81, 115.46, 18, 22));
+            spawns.put(2, new Location(Bukkit.getWorld("world"), -207.6, 81, 115.46, -1, 23));
+            spawns.put(3, new Location(Bukkit.getWorld("world"), -210.4, 81, 115.46, -30, 25));
+            spawns.put(4, new Location(Bukkit.getWorld("world"), -204.39, 81, 123.7, 159, 26));
+            spawns.put(5, new Location(Bukkit.getWorld("world"), -207.6, 81, 123.7, -178, 30));
+            spawns.put(6, new Location(Bukkit.getWorld("world"), -210.4, 81, 123.7, -150, 30));
+            places = new HashMap<>();
+            tapis = new HashMap<>();
+            cards = new HashMap<>();
+            river = new ArrayList<>();
+            bided = new HashMap<>();
+            for(Player p : armorStands.keySet()){
+                armorStands.get(p).remove();
+            }
+            armorStands = new HashMap<>();
+            dead = new ArrayList<>();
+            return true;
+        }
+        return false;
     }
 }

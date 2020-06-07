@@ -7,7 +7,6 @@ public enum GameState {
     FLOP,
     TURN,
     RIVER,
-    TURN_END,
     GAME_END;
 
 }

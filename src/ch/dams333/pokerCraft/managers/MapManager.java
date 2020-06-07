@@ -163,11 +163,16 @@ public class MapManager {
                         public void run() {
                             setMap(getCardMap(main.gameManager.cards.get(p).get(1)[0], main.gameManager.cards.get(p).get(1)[1]), playerCardsLocations.get(finalPlace).get(1));
                             p.getInventory().setItemInOffHand(null);
-                            main.gameManager.calculScore();
                         }
                     }, 20L);
                 }
             }, 15L);
         }
+        Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
+            @Override
+            public void run() {
+                main.gameManager.calculScore();
+            }
+        }, 60L);
     }
 }

@@ -20,16 +20,27 @@ public class GameAfficheTask extends BukkitRunnable {
 
     @Override
     public void run() {
-        for(Player p : Bukkit.getOnlinePlayers()){
-            int bided = main.gameManager.bided.get(p);
-            int tapis = main.gameManager.tapis.get(p);
-            int currentMaxBid = main.gameManager.currentBid;
-            int totalBided = 0;
-            for(Player pl : main.gameManager.bided.keySet()){
-                totalBided += main.gameManager.bided.get(pl);
+        if(main.gameManager.armorStands.size() > 0) {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                int bided = main.gameManager.bided.get(p);
+                int tapis = main.gameManager.tapis.get(p);
+                int currentMaxBid = main.gameManager.currentBid;
+                int totalBided = 0;
+                for (Player pl : main.gameManager.bided.keySet()) {
+                    totalBided += main.gameManager.bided.get(pl);
+                }
+                sendActionBar(p, ChatColor.GOLD + "Tapis: " + tapis + ChatColor.GRAY + " | " + ChatColor.GREEN + "Misé: " + bided + ChatColor.GRAY + " | " + ChatColor.DARK_BLUE + "Plus grosse mise: " + currentMaxBid + ChatColor.GRAY + " | " + ChatColor.RED + "Montant total: " + totalBided);
+
+                if (!main.gameManager.dead.contains(p)) {
+                    if (main.gameManager.debout.contains(p)) {
+                        main.gameManager.armorStands.get(p).setCustomName(ChatColor.GOLD + "Tapis: " + tapis + ChatColor.GRAY + " | " + ChatColor.GREEN + "Mise: " + bided);
+                    } else {
+                        main.gameManager.armorStands.get(p).setCustomName(ChatColor.RED + "Couché");
+                    }
+                } else {
+                    main.gameManager.armorStands.get(p).setCustomName(ChatColor.RED + " ");
+                }
             }
-            sendActionBar(p, ChatColor.GOLD + "Tapis: " + tapis + ChatColor.GRAY + " | " + ChatColor.GREEN + "Misé: " + bided + ChatColor.GRAY + " | " + ChatColor.DARK_BLUE + "Plus grosse mise: "+ currentMaxBid + ChatColor.GRAY + " | " + ChatColor.RED + "Montant total: " + totalBided);
-            main.gameManager.armorStands.get(p).setCustomName(ChatColor.GOLD + "Tapis: " + tapis + ChatColor.GRAY + " | " + ChatColor.GREEN + "Mise: " + bided);
         }
     }
 

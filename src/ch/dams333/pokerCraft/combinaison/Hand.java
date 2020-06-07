@@ -114,7 +114,7 @@ public class Hand {
             for(Card card2 : cards){
                 if(card1.getValue().equals(card2.getValue()) && !card1.getColor().equals(card2.getColor())){
                     for(Card card3 : cards) {
-                        if (card1.getValue() == card3.getValue() && card1.getColor() != card3.getColor() && card3.getColor() != card2.getColor()) {
+                        if (card1.getValue().equals(card3.getValue()) && !card1.getColor().equals(card3.getColor()) && !card3.getColor().equals(card2.getColor())) {
                             return new Combinaison("brelan", valueToNumber(card1.getValue()), getBestCardOfHand());
                         }
                     }
