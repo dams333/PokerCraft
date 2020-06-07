@@ -514,7 +514,6 @@ public class GameManager {
             @Override
             public void run() {
 
-                debout = new ArrayList<>();
                 cards = new HashMap<>();
                 river = new ArrayList<>();
 
@@ -536,6 +535,12 @@ public class GameManager {
                         }
                     }
                 }
+
+
+                for(Player p : debout){
+                    debout.remove(p);
+                }
+
 
                 for(Player p : Bukkit.getOnlinePlayers()){
                     if(!dead.contains(p)) {
@@ -581,7 +586,7 @@ public class GameManager {
         Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
             @Override
             public void run() {
-                bigBlind = bigBlind + 1;
+                bigBlind++;
                 if(bigBlind > debout.size()){
                     bigBlind = 1;
                 }
@@ -601,7 +606,7 @@ public class GameManager {
                     }
                 }, 20L);
             }
-        }, 50L);
+        }, 30L);
 
     }
 
