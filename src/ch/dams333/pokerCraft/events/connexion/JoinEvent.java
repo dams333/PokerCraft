@@ -27,6 +27,7 @@ public class JoinEvent implements Listener {
             p.getInventory().clear();
             p.updateInventory();
             p.teleport(new Location(Bukkit.getWorld("world"), -197.5, 79, 119.5, 90, 10));
+            main.statistiquesManager.createStat(p);
         }else{
             e.getPlayer().kickPlayer(ChatColor.RED + "La partie a déjà dàmarrée");
         }

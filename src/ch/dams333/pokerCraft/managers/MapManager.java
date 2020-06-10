@@ -3,6 +3,7 @@ package ch.dams333.pokerCraft.managers;
 import ch.dams333.pokerCraft.Poker;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Rotation;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemFrame;
@@ -174,5 +175,16 @@ public class MapManager {
                 main.gameManager.calculScore();
             }
         }, 60L);
+    }
+
+    public void rotateRiver() {
+        for(Location loc : this.riverLocations){
+            ItemFrame frame = getFrameFromLocation(loc);
+            if(frame.getRotation() == Rotation.COUNTER_CLOCKWISE){
+                frame.setRotation(Rotation.FLIPPED);
+            }else{
+                frame.setRotation(Rotation.COUNTER_CLOCKWISE);
+            }
+        }
     }
 }

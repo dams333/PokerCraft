@@ -108,6 +108,9 @@ public class GameManager {
             armorStand.setInvulnerable(true);
             armorStand.setGravity(false);
             this.armorStands.put(p, armorStand);
+
+            main.statistiquesManager.newGame(p);
+            main.statistiquesManager.addCompleteRound(p);
         }
 
         Location spawnArmorStand = new Location(Bukkit.getWorld("world"), -208, 80, 119);
@@ -174,13 +177,23 @@ public class GameManager {
             }
         }
 
-        Bukkit.broadcastMessage(main.name + places.get(needToEnchere).getName() + " doit choisir une action");
-        haveToChooseAction(places.get(needToEnchere));
+        for(Player p : debout){
+            main.statistiquesManager.newRound(p);
+        }
+
+        if(tapis.get(places.get(needToEnchere)) > 0) {
+            Bukkit.broadcastMessage(main.name + places.get(needToEnchere).getName() + " doit choisir une action");
+            haveToChooseAction(places.get(needToEnchere));
+        }else{
+            Bukkit.broadcastMessage(main.name + places.get(needToEnchere).getName() + " fait déja tapis. Il ne choisit pas d'action");
+            main.statistiquesManager.removeRound(places.get(needToEnchere));
+            this.exprimed.put(places.get(needToEnchere), true);
+            this.nextEnchere();
+        }
     }
 
     private void haveToChooseAction(Player p) {
 
-        p.sendMessage(" ");
         p.sendMessage(" ");
 
         p.sendMessage(ChatColor.DARK_GREEN + "======= Actions =======");
@@ -193,6 +206,7 @@ public class GameManager {
             p.sendMessage("       " + ChatColor.LIGHT_PURPLE  + "4 " + ChatColor.GRAY + "Suivre");
         }
         p.sendMessage("       " + ChatColor.LIGHT_PURPLE + "5 " + ChatColor.GRAY + "Relancer");
+        p.sendMessage("       " + ChatColor.LIGHT_PURPLE + "6 " + ChatColor.GRAY + "Tapis");
 
         p.sendMessage(" ");
 
@@ -250,6 +264,18 @@ public class GameManager {
             this.relance(p);
             p.sendMessage(ChatColor.BLUE + "Veuillez écrire le montant dans le chat !");
         }
+        if(slot == 5){
+            this.tapis(p);
+        }
+    }
+
+    private void tapis(Player p) {
+        main.statistiquesManager.makeTapis(p);
+        Bukkit.broadcastMessage(main.name + p.getName() + " fait tapis de " + this.tapis.get(p));
+        message = p.getName() + " fait tapis de " + this.tapis.get(p);
+        addBid(p, this.tapis.get(p));
+        tapis.put(p, 0);
+        this.nextEnchere();
     }
 
     public Player relance;
@@ -260,26 +286,30 @@ public class GameManager {
 
     private void follow(Player p) {
         if(this.tapis.get(p) > (this.currentBid - this.bided.get(p))){
+            main.statistiquesManager.makeFollow(p);
             Bukkit.broadcastMessage(main.name + p.getName() + " suit de " + (this.currentBid - this.bided.get(p)));
             message =p.getName() + " suit de " + (this.currentBid - this.bided.get(p));
-                    removeMoney(p, (this.currentBid - this.bided.get(p)));
+            removeMoney(p, (this.currentBid - this.bided.get(p)));
             addBid(p, (this.currentBid - this.bided.get(p)));
         }else{
+            main.statistiquesManager.makeTapis(p);
             Bukkit.broadcastMessage(main.name + p.getName() + " fait tapis de " + this.tapis.get(p));
             message = p.getName() + " fait tapis de " + this.tapis.get(p);
-            tapis.put(p, 0);
             addBid(p, this.tapis.get(p));
+            tapis.put(p, 0);
         }
         this.nextEnchere();
     }
 
     private void check(Player p) {
+        main.statistiquesManager.makeCheck(p);
         Bukkit.broadcastMessage(main.name + p.getName() + " check");
         message = p.getName() + " check";
         this.nextEnchere();
     }
 
     private void couche(Player p) {
+        main.statistiquesManager.makeCouche(p);
         this.debout.remove(p);
         Bukkit.broadcastMessage(main.name + p.getName() + " se couche");
         message = p.getName() + " se couche";
@@ -345,6 +375,8 @@ public class GameManager {
 
                     Player finalBestP = debout.get(0);
 
+                    main.statistiquesManager.addRoundWin(finalBestP);
+
                     Bukkit.broadcastMessage(main.name + finalBestP.getName() + " est le dernier debout. Il remporte " + total);
                     message = finalBestP.getName() + " remporte le round";
 
@@ -390,12 +422,14 @@ public class GameManager {
     public void hasRelance(int add) {
         if((add + this.bided.get(relance)) > currentBid){
             if(this.tapis.get(relance) > add){
+                main.statistiquesManager.makeRelance(relance);
                 Bukkit.broadcastMessage(main.name + relance.getName() + " relance de " + add);
                 message = relance.getName() + " relance de " + add;
                 removeMoney(relance, add);
                 addBid(relance, add);
                 this.currentBid = this.bided.get(relance);
             }else{
+                main.statistiquesManager.makeTapis(relance);
                 Bukkit.broadcastMessage(main.name + relance.getName() + " fait tapis de " + this.tapis.get(relance));
                 message = relance.getName() + " fait tapis de " + this.tapis.get(relance);
                 addBid(relance, this.tapis.get(relance));
@@ -424,8 +458,15 @@ public class GameManager {
         int nextPlayer = getNextPlayer();
         if(this.bided.get(places.get(nextPlayer)) < this.currentBid){
             needToEnchere = nextPlayer;
-            Bukkit.broadcastMessage(main.name + places.get(needToEnchere).getName() + " doit choisir une action");
-            haveToChooseAction(places.get(needToEnchere));
+            if(tapis.get(places.get(needToEnchere)) > 0) {
+                Bukkit.broadcastMessage(main.name + places.get(needToEnchere).getName() + " doit choisir une action");
+                haveToChooseAction(places.get(needToEnchere));
+            }else{
+                Bukkit.broadcastMessage(main.name + places.get(needToEnchere).getName() + " fait déja tapis. Il ne choisit pas d'action");
+                main.statistiquesManager.removeRound(places.get(needToEnchere));
+                this.exprimed.put(places.get(needToEnchere), true);
+                this.nextEnchere();
+            }
         }else{
             if(everypodyParled) {
                 Bukkit.broadcastMessage(main.name + "Fin du tour d'enchère");
@@ -438,8 +479,15 @@ public class GameManager {
                 }, 10L);
             }else{
                 needToEnchere = nextPlayer;
-                Bukkit.broadcastMessage(main.name + places.get(needToEnchere).getName() + " doit choisir une action");
-                haveToChooseAction(places.get(needToEnchere));
+                if(tapis.get(places.get(needToEnchere)) > 0) {
+                    Bukkit.broadcastMessage(main.name + places.get(needToEnchere).getName() + " doit choisir une action");
+                    haveToChooseAction(places.get(needToEnchere));
+                }else{
+                    Bukkit.broadcastMessage(main.name + places.get(needToEnchere).getName() + " fait déja tapis. Il ne choisit pas d'action");
+                    main.statistiquesManager.removeRound(places.get(needToEnchere));
+                    this.exprimed.put(places.get(needToEnchere), true);
+                    this.nextEnchere();
+                }
             }
         }
     }
@@ -500,6 +548,7 @@ public class GameManager {
     }
 
     public void calculScore() {
+
         main.setGameState(GameState.GAME_END);
         Bukkit.broadcastMessage(main.name + "Recherche de la meilleur combinaison de chaque joueur ...");
 
@@ -529,6 +578,8 @@ public class GameManager {
         Combinaison bestC = null;
         Player bestP = null;
 
+        Player equal = null;
+
         for(Player p : combinaisons.keySet()){
             if(bestC == null){
                 bestC = combinaisons.get(p);
@@ -545,6 +596,8 @@ public class GameManager {
                         if(combinaisons.get(p).getHigher() > bestC.getHigher()){
                             bestC = combinaisons.get(p);
                             bestP = p;
+                        }else{
+                            equal = p;
                         }
                     }
                 }
@@ -552,21 +605,40 @@ public class GameManager {
         }
 
         Player finalBestP = bestP;
+        Player finalEqual = equal;
         Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
             @Override
             public void run() {
 
 
-                int total = 0;
-                for(Player p : bided.keySet()){
-                    total += bided.get(p);
-                    bided.put(p, 0);
+                if(finalEqual == null) {
+                    int total = 0;
+                    for (Player p : bided.keySet()) {
+                        total += bided.get(p);
+                        bided.put(p, 0);
+                    }
+
+                    main.statistiquesManager.addRoundWin(finalBestP);
+                    Bukkit.broadcastMessage(main.name + finalBestP.getName() + " a la meilleur combinaison. Il remporte " + total);
+                    message = finalBestP.getName() + " remporte le round";
+
+                    addMoney(finalBestP, total);
+                }else{
+                    int total = 0;
+                    for (Player p : bided.keySet()) {
+                        total += bided.get(p);
+                        bided.put(p, 0);
+                    }
+                    int win = total/2;
+
+                    main.statistiquesManager.addRoundWin(finalBestP);
+                    main.statistiquesManager.addRoundWin(finalEqual);
+                    Bukkit.broadcastMessage(main.name + finalBestP.getName() + "ainsi que " + finalEqual.getName() + " ont les meilleures combinaison. Ils remportent chacun " + win);
+                    message = finalBestP.getName() + " et " + finalEqual.getName() + " remportent le round";
+
+                    addMoney(finalBestP, total);
+                    addMoney(finalEqual, total);
                 }
-
-                Bukkit.broadcastMessage(main.name + finalBestP.getName() + " a la meilleur combinaison. Il remporte " + total);
-                message = finalBestP.getName() + " remporte le round";
-
-                addMoney(finalBestP, total);
                 currentBid = 0;
 
                 for(Player p : tapis.keySet()){
@@ -619,6 +691,7 @@ public class GameManager {
             cards.add(card2);
             this.cards.put(p, cards);
             bided.put(p, 0);
+            main.statistiquesManager.addCompleteRound(p);
         }
 
         Bukkit.getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
@@ -682,6 +755,7 @@ public class GameManager {
             return true;
         }
         if(debout.size() == 1){
+            main.statistiquesManager.addGameWin(debout.get(0));
             Bukkit.broadcastMessage(main.name + debout.get(0).getName() + " remporte la partie !!!");
             for(Player p : Bukkit.getOnlinePlayers()){
                 p.getInventory().clear();

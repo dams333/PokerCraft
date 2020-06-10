@@ -14,9 +14,12 @@ public class GameAfficheTask extends BukkitRunnable {
 
     public GameAfficheTask(Poker main) {
         this.main = main;
+        timer = 0;
     }
 
     private Poker main;
+
+    private int timer;
 
     @Override
     public void run() {
@@ -29,7 +32,7 @@ public class GameAfficheTask extends BukkitRunnable {
                 for (Player pl : main.gameManager.bided.keySet()) {
                     totalBided += main.gameManager.bided.get(pl);
                 }
-                sendActionBar(p, ChatColor.GOLD + "Tapis: " + tapis + ChatColor.GRAY + " | " + ChatColor.GREEN + "Misé: " + bided + ChatColor.GRAY + " | " + ChatColor.DARK_BLUE + "Plus grosse mise: " + currentMaxBid + ChatColor.GRAY + " | " + ChatColor.RED + "Montant total: " + totalBided);
+                sendActionBar(p, ChatColor.GOLD + "Tapis: " + tapis + ChatColor.GRAY + " | " + ChatColor.YELLOW + "Misé: " + bided + ChatColor.GRAY + " | " + ChatColor.GREEN + "Plus grosse mise: " + currentMaxBid + ChatColor.GRAY + " | " + ChatColor.AQUA + "Montant total: " + totalBided);
 
                 if (!main.gameManager.dead.contains(p)) {
                     if (main.gameManager.debout.contains(p)) {
@@ -44,6 +47,13 @@ public class GameAfficheTask extends BukkitRunnable {
         }
         if(main.gameManager.central != null){
             main.gameManager.central.setCustomName(ChatColor.GRAY + main.gameManager.message);
+        }
+        timer++;
+        if(timer >= 10){
+            if(main.gameManager.places.keySet().size() > 3) {
+                timer = 0;
+                main.mapManager.rotateRiver();
+            }
         }
     }
 

@@ -2,6 +2,7 @@ package ch.dams333.pokerCraft;
 
 import ch.dams333.damsLib.DamsLIB;
 import ch.dams333.pokerCraft.commands.StartCommand;
+import ch.dams333.pokerCraft.commands.StatCommand;
 import ch.dams333.pokerCraft.events.connexion.JoinEvent;
 import ch.dams333.pokerCraft.events.status.ChangeSlotEvent;
 import ch.dams333.pokerCraft.events.status.ChatEvent;
@@ -10,6 +11,7 @@ import ch.dams333.pokerCraft.managers.CardManager;
 import ch.dams333.pokerCraft.managers.GameManager;
 import ch.dams333.pokerCraft.managers.MapManager;
 import ch.dams333.pokerCraft.states.GameState;
+import ch.dams333.pokerCraft.stats.StatistiquesManager;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,6 +24,7 @@ public class Poker extends JavaPlugin{
     public MapManager mapManager;
     public GameManager gameManager;
     public CardManager cardManager;
+    public StatistiquesManager statistiquesManager;
 
     private GameState gameState;
 
@@ -33,14 +36,16 @@ public class Poker extends JavaPlugin{
         this.mapManager = new MapManager(this);
         this.gameManager = new GameManager(this);
         this.cardManager = new CardManager(this);
-        mapManager.resetTable();
+        this.statistiquesManager = new StatistiquesManager(this);
         getServer().getPluginManager().registerEvents(new JoinEvent(this), this);
         getServer().getPluginManager().registerEvents(new StatusEvent(this), this);
         getServer().getPluginManager().registerEvents(new ChangeSlotEvent(this), this);
         getServer().getPluginManager().registerEvents(new ChatEvent(this), this);
         gameState = GameState.PREGAME;
         getCommand("start").setExecutor(new StartCommand(this));
-
+        getCommand("stat").setExecutor(new StatCommand(this));
+        statistiquesManager.deserialize();
+        mapManager.resetTable();
     }
 
     public void setGameState(GameState gameState) {
@@ -52,7 +57,10 @@ public class Poker extends JavaPlugin{
 
     @EventHandler
     public void onDisable(){
-        gameManager.central.remove();
+        statistiquesManager.serialize();
+        if(gameManager.central != null) {
+            gameManager.central.remove();
+        }
         for(Player p : gameManager.armorStands.keySet()){
             gameManager.armorStands.get(p).remove();
         }

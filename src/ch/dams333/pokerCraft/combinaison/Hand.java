@@ -25,18 +25,34 @@ public class Hand {
         if(value.equalsIgnoreCase("a")){
             return 14;
         }
-        return Integer.parseInt(value);
+        if(isInt(value)) {
+            return Integer.parseInt(value);
+        }else{
+            return 0;
+        }
+    }
+
+    private boolean isInt(String strNum) {
+        boolean ret = true;
+        try {
+
+            Integer.parseInt(strNum);
+
+        }catch (NumberFormatException e) {
+            ret = false;
+        }
+        return ret;
     }
 
     private int getBestCardOfHand(){
         Card best = null;
-        for(Card card : cards){
+        for(int i = 5; i <= 6; i++){
             if(best != null){
-                if(valueToNumber(card.getValue()) > valueToNumber(best.getValue())){
-                    best = card;
+                if(valueToNumber(cards.get(i).getValue()) > valueToNumber(best.getValue())){
+                    best = cards.get(i);
                 }
             }else{
-                best = card;
+                best = cards.get(i);
             }
         }
         return valueToNumber(best.getValue());
